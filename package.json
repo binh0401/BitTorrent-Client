@@ -1,0 +1,12 @@
+{
+  "name": "bittorrent",
+  "version": "1.0.0",
+  "description": "BitTorrent Client built from scratch using Nodejs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
