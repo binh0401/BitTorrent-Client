@@ -27,4 +27,6 @@ Buffer is a container for raw byte, and 1 byte equals to 4 bits. Bit is just 0 o
 
 Buffer's representation: <Buffer 02 04 06 08 0a 0c 0e 10>, each number is represent in hexadecimal.
 
+UDP is used for peers to talk with tracker instead of HTTP(TCP), this will reduce the traffic by 50%
+
 
