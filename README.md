@@ -29,4 +29,7 @@ Buffer's representation: <Buffer 02 04 06 08 0a 0c 0e 10>, each number is repres
 
 UDP is used for peers to talk with tracker instead of HTTP(TCP), this will reduce the traffic by 50%
 
+How to download file ? 
+- Get list of peers --> Set TCP connection with them --> Requests pieces of the files you need --> Maybe request next piece we need (keep track of what you already have) --> Write received data to our disk
+
 
