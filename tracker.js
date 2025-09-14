@@ -59,7 +59,10 @@ const buildConnReq = () => {
 }
 
 const resType = (res) => {
-
+  //Read first 4 bytes to identify the connection type
+  const action = res.readUInt32BE(0)
+  if (action === 0) return "connect"
+  if (action === 1) return "announce"
 }
 
 const parseConnRes = (res) => {
