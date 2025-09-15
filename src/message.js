@@ -2,6 +2,7 @@ import {Buffer} from "buffer"
 import { infoHash } from "./torrentParser"
 import { genId } from "./util"
 
+//HANDSHAKE
 export const buildHandshake = (torrent) => {
   const buffer = Buffer.alloc(68)
 
@@ -23,6 +24,8 @@ export const buildHandshake = (torrent) => {
   return buffer
 }
 
+
+//NORMAL MESSAGE AFTER HANDSHAKE
 export const buildKeepAlive = () => Buffer.alloc(4)
 
 

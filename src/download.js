@@ -18,8 +18,30 @@ const download = (peer) => {
   })
 
   //Handle responses from peer
-  socket.on("data", data => {
+  onWholeMsg(socket, data => {
 
+  })
+}
+
+//Handshake: <1 byte pstrlen><pstrlen bytes (19) pstr><8 bytes reserved><20 bytes info_hash><20 bytes peer_id>
+//Normal message: <4-byte length prefix><message_id + payload>
+
+//TCP send bytes in order, but does not guarantee the bytes of the same message are placed in a chunk.
+//We have to write a function to group bytes of a message 
+const onWholeMsg = (socket, cb) => {
+  let savedBuffer = Buffer.alloc(0)
+  let handshake = true //Dedicate if the data receive is from the handshake or not
+
+  socket.on("data", receivedBuffer => {
+    //Calculate the length of the whole message: 
+    const mgsLen = () => handshake ? savedBuffer.readUInt8(0) + 49 : savedBuffer.readInt32BE(0) + 4
+    savedBuffer = Buffer.concat([savedBuffer, receivedBuffer])
+
+    while(savedBuffer.length >=4 && savedBuffer.length >= mgsLen()){
+      cb(savedBuffer.slice(0, mgsLen()))
+      savedBuffer = savedBuffer.slice(mgsLen())
+      handshake = false
+    }
   })
 }
 /* 
