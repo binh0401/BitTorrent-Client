@@ -1,26 +1,35 @@
 import net from "net"
 import { Buffer } from "buffer"
 import {getPeers} from "./tracker.js"
+import {buildHandshake, buildInterested} from './message.js'
 
 export default downloadFromPeers = (torrent) => {
   //Get list of peers, then download from each of them
   getPeers(torrent, peers => {
-    peers.forEach(download)
+    peers.forEach(peer => download(peer, torrent))
   })
 }
 
-const download = (peer) => {
+const download = (peer, torrent) => {
   //Create a TCP connection with each peer
   const socket = new net.Socket()
   socket.on("error", console.log)
   socket.connect(peer.port, peer.ip, () => {
 
+    //1. Build handshake when connect
+    socket.write(buildHandshake(torrent))
   })
 
   //Handle responses from peer
-  onWholeMsg(socket, data => {
+  onWholeMsg(socket, msg => msgHandler(msg, socket))
+}
 
-  })
+const msgHandler = (msg, socket) => {
+  if(isHandshake(msg)) socket.write(buildInterested())
+}
+
+const isHandshake = (msg) => {
+  return msg.length === msg.readUInt8(0) + 49 && msg.toString("utf8", 1) === "BitTorrent protocol"
 }
 
 //Handshake: <1 byte pstrlen><pstrlen bytes (19) pstr><8 bytes reserved><20 bytes info_hash><20 bytes peer_id>
