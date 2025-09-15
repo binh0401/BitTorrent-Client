@@ -73,7 +73,7 @@ export const buildUninterested = () => {
 
 }
 
-//peer send back payload 
+//peer send back payload, which contains a piece's index (the piece that peer has)
 export const buildHave = (payload) => {
   const buffer = Buffer.alloc(9)
 
@@ -87,3 +87,97 @@ export const buildHave = (payload) => {
   buffer.writeUInt32BE(payload, 5)
   return buffer
 }
+
+export const buildBitfield = bitfield => {
+  const buffer = Buffer.alloc(14)
+
+  //length
+  buffer.writeUInt32BE(bitfield.length + 1, 0)
+
+  //id
+  buffer.writeUInt8(5, 4)
+
+  //bitfield
+  bitfield.copy(buffer, 5)
+
+  return buffer
+}
+
+export const buildRequest = (payload) => {
+  const buffer = Buffer.alloc(17)
+
+  //length
+  buffer.writeUInt32BE(13, 0)
+
+  //id
+  buffer.writeUInt8(6, 4)
+
+  //piece index
+  buffer.writeUInt32BE(payload.index, 5)
+
+  //begin
+  buffer.writeUInt32BE(payload.begin, 9)
+
+  //length
+  buffer.writeUInt32BE(payload.length, 13)
+
+  return buffer
+}
+
+
+export const buildPiece = (payload) => {
+  const buffer = Buffer.alloc(payload.block.length+13)
+
+  //length
+  buffer.writeUInt32BE(payload.block.length+9, 0)
+
+  //id
+  buffer.writeUInt8(7, 4)
+
+  //piece index
+  buffer.writeUInt32BE(payload.index, 5)
+
+  //begin
+  buffer.writeUInt32BE(payload.begin, 9)
+
+  //block
+  payload.block.copy(buffer, 13)
+  return buffer
+}
+
+export const buildCancel = (payload) => {
+  const buffer = Buffer.alloc(17)
+
+  //length
+  buffer.writeUInt32BE(13, 0)
+
+  //id
+  buffer.writeUInt8(8, 4)
+
+  //piece index
+  buffer.writeUInt32BE(payload.index, 5)
+
+  //begin
+  buffer.writeUInt32BE(payload.begin, 9)
+
+  //length
+  buffer.writeUInt32BE(payload.length, 13)
+
+  return buffer
+}
+
+
+export const buildPort = payload => {
+  const buffer = Buffer.alloc(7)
+
+  //length
+  buffer.writeUInt32BE(3, 0)
+
+  //id
+  buffer.writeUInt8(9, 4)
+
+  //listen port
+  buffer.writeUInt16BE(payload, 5)
+  return buffer
+}
+
