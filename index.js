@@ -1,5 +1,5 @@
-import { getPeers } from "./tracker";
-import { open } from "./torrentParser";
+import { getPeers } from "/src/tracker.js";
+import { open } from "./src/torrentParser.js";
 
 //Decode the torrent file:
 const decodedTorentFile = open("puppy.torrent")
