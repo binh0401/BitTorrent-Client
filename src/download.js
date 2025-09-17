@@ -9,7 +9,7 @@ export default downloadFromPeers = (torrent) => {
   //Get list of peers, then download from each of them
   getPeers(torrent, peers => {
 
-    const pieces = new Pieces(torrent.info.pieces.length / 20)
+    const pieces = new Pieces(torrent.info.pieces.length / 20)//Each piece is a buffer 20-byte long ==> Number of pieces = Total bytes length / 20
 
     peers.forEach(peer => download(peer, torrent, pieces))
   })
