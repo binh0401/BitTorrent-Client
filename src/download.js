@@ -56,20 +56,24 @@ const unChokeHandler = (socket, pieces, queue) => {
   requestPiece(socket, pieces, queue)
 }
 
-const haveHandler = (payload, socket, requested, queue) => {
-  const pieceIndex = payload.readUInt32BE(32)
-  queue.push(pieceIndex)
-  if(queue.length === 1){
-    requestPiece(socket, requested, queue)
-  }
-  if(!requested[pieceIndex]){
-    socket.write(buildRequest())
-  }
-  requested[pieceIndex] = true
+const haveHandler = (socket, pieces, queue, payload) => {
+  const pieceIndex = payload.readUInt32BE(0)
+  const queueEmpty = queue.length === 0
+  queue.queue(pieceIndex)
+  if(queueEmpty) requestPiece(socket, pieces, queue)
+  
 }
 
-const bitfieldHandler = (payload) => {
+const bitfieldHandler = (socket, pieces, queue, payload) => {
+  const queueEmpty = queue.length === 0
+  payload.forEach((byte, i) => {
+    for(let j = 0; j<8;j++){
+      if (byte % 2) queue.queue(i*8 + 7 -j)
+      byte = Math.floor(byte/2)
+    }
+  })
 
+  if(queueEmpty) requestPiece(socket, pieces, queue)
 }
 
 const pieceHandler = (payload, socket, requested, queue) => {
