@@ -3,13 +3,14 @@ import { Buffer } from "buffer"
 import {getPeers} from "./tracker.js"
 import {buildHandshake, buildInterested, buildRequest, messageParser} from './message.js'
 import { Pieces } from "./Pieces.js"
+import { Queue } from "./Queue.js"
 
 export default downloadFromPeers = (torrent) => {
 
   //Get list of peers, then download from each of them
   getPeers(torrent, peers => {
 
-    const pieces = new Pieces(torrent.info.pieces.length / 20)//Each piece is a buffer 20-byte long ==> Number of pieces = Total bytes length / 20
+    const pieces = new Pieces(torrent)//Each piece is a buffer 20-byte long ==> Number of pieces = Total bytes length / 20
 
     peers.forEach(peer => download(peer, torrent, pieces))
   })
@@ -26,7 +27,7 @@ const download = (peer, torrent, pieces) => {
   })
 
   //Handle responses from peer
-  const queue = {choked: true, queue: []}
+  const queue = new Queue(torrent)
   onWholeMsg(socket, msg => msgHandler(msg, socket, pieces, queue))
 }
 
@@ -80,11 +81,11 @@ const pieceHandler = (payload, socket, requested, queue) => {
 const requestPiece = (socket, pieces, queue) => {
   if(queue.choked) return null
 
-  while(queue.queue.length){
-    const pieceIndex = queue.shift()
-    if(pieces.needed(pieceIndex)){
-      socket.write(buildRequest(pieceIndex))
-      pieces.addRequested(pieceIndex)
+  while(queue.length()){
+    const pieceBlock = queue.dequeue()
+    if(pieces.needed(pieceBlock)){
+      socket.write(buildRequest(pieceBlock))
+      pieces.addRequested(pieceBlock)
       break
     }
   }

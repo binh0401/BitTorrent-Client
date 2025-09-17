@@ -3,7 +3,7 @@ import fs from "fs"
 import crypto from "crypto"
 import bignum from "bignum"
 
-export const BLOCK_LEN = Math.pow(2, 14)
+export const BLOCK_LEN = Math.pow(2, 14) //1 block is 2^14 bits
 
 export const pieceLen = (torrent, pieceIndex) => {
   const totalLength = bignum.fromBuffer(size(torrent)).toNumber()
