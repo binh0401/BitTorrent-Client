@@ -4,19 +4,20 @@ import {getPeers} from "./tracker.js"
 import {buildHandshake, buildInterested, buildRequest, messageParser} from './message.js'
 import { Pieces } from "./Pieces.js"
 import { Queue } from "./Queue.js"
+import { closeSync, openSync, write } from "fs"
 
-export default downloadFromPeers = (torrent) => {
+export default downloadFromPeers = (torrent, path) => {
 
   //Get list of peers, then download from each of them
   getPeers(torrent, peers => {
 
     const pieces = new Pieces(torrent)//Each piece is a buffer 20-byte long ==> Number of pieces = Total bytes length / 20
-
-    peers.forEach(peer => download(peer, torrent, pieces))
+    const file = openSync(path, "w") //Create an empty file to write what we receive
+    peers.forEach(peer => download(peer, torrent, pieces, file))
   })
 }
 
-const download = (peer, torrent, pieces) => {
+const download = (peer, torrent, pieces, file) => {
   //Create a TCP connection with each peer
   const socket = new net.Socket()
   socket.on("error", console.log)
@@ -28,10 +29,10 @@ const download = (peer, torrent, pieces) => {
 
   //Handle responses from peer
   const queue = new Queue(torrent)
-  onWholeMsg(socket, msg => msgHandler(msg, socket, pieces, queue))
+  onWholeMsg(socket, msg => msgHandler(msg, socket, pieces, queue, torrent, file))
 }
 
-const msgHandler = (msg, socket, pieces, queue) => {
+const msgHandler = (msg, socket, pieces, queue, torrent, file) => {
   if(isHandshake(msg)){
     socket.write(buildInterested())
   }else{
@@ -39,9 +40,9 @@ const msgHandler = (msg, socket, pieces, queue) => {
 
     if(m.id === 0) chokeHandler(socket)
     if(m.id === 1) unChokeHandler(socket, pieces, queue)
-    if(m.id === 4) haveHandler(m.payload)
-    if(m.id === 5) bitfieldHandler(m.payload)
-    if(m.id === 7) pieceHandler(m.payload)
+    if(m.id === 4) haveHandler(socket, pieces, queue, m.payload)
+    if(m.id === 5) bitfieldHandler(socket, pieces, queue, m.payload)
+    if(m.id === 7) pieceHandler(socket, pieces, queue, torrent, file, m.payload)
   }
 }
 
@@ -76,10 +77,31 @@ const bitfieldHandler = (socket, pieces, queue, payload) => {
   if(queueEmpty) requestPiece(socket, pieces, queue)
 }
 
-const pieceHandler = (payload, socket, requested, queue) => {
+/*
+Piece response handler: when we receive bytes of the piece we request
 
-  queue.shift()
-  requestPiece(socket, requested, queue)
+Add piece to list of received pieces --> Write bytes to file --> Request next piece --> Check if no more pieces needed, then close connection
+
+*/
+const pieceHandler = (socket, pieces, queue, torrent, file, pieceResp) => {
+  console.log(pieceResp)
+  pieces.addReceived(pieceResp)
+
+  //Write to file
+  const offset = pieceResp.index * torrent.info["piece length"] + pieceResp.begin
+  write(file, pieceResp.block, 0, pieceResp.block.length, offset, () => {})
+
+  if(pieces.isDone()){
+    socket.end()
+    console.log("DONE")
+    try {
+      closeSync(file)
+    } catch (error) {
+      console.log(error)
+    }
+  }else{
+    requestPiece(socket, pieces, queue)
+  }
 }
 
 const requestPiece = (socket, pieces, queue) => {
@@ -130,3 +152,7 @@ const onWholeMsg = (socket, cb) => {
 
 
 */
+
+
+
+
